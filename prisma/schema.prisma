@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - Khách hàng và Admin
+model NguoiDung {
+  id           Int      @id @default(autoincrement())
+  ho_ten       String
+  email        String   @unique
+  mat_khau     String
+  so_dien_thoai String?
+  vai_tro      String   @default("khach_hang") // khach_hang, admin
+  dia_chi      String?
+  avatar_url   String?
+  thong_baos   ThongBao[]
+  tokens       Token[]
+  bookings     Booking[]
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+}
+
+// Token for authentication
+model Token {
+  id            Int      @id @default(autoincrement())
+  nguoi_dung_id Int
+  token         String
+  loai_token    String   @default("access_token") // access_token, refresh_token
+  het_han       DateTime
+  nguoi_dung    NguoiDung @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade)
+  created_at    DateTime @default(now())
+}
+
+// Notification model
+model ThongBao {
+  id            Int      @id @default(autoincrement())
+  nguoi_dung_id Int?
+  booking_id    Int?     // Liên kết với booking (optional)
+  tieu_de       String
+  noi_dung      String
+  loai          String   @default("thong_bao") // thong_bao, dat_tour, cap_nhat_tour
+  da_doc        Boolean  @default(false)
+  nguoi_dung    NguoiDung? @relation(fields: [nguoi_dung_id], references: [id], onDelete: Cascade)
+  booking       Booking? @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+  created_at    DateTime @default(now())
+}
+
+// Tour model
+model Tour {
+  id              Int         @id @default(autoincrement())
+  ten_tour        String
+  mo_ta           String?     @db.Text
+  mo_ta_ngan      String?     // Mô tả ngắn cho card
+  gia_nguoi_lon   Float       // Giá người lớn
+  gia_tre_em      Float?      // Giá trẻ em (optional)
+  so_ngay         Int         // Số ngày tour
+  so_dem          Int         // Số đêm
+  diem_khoi_hanh  String      // Điểm khởi hành
+  diem_den        String      // Điểm đến
+  phuong_tien     String      // Phương tiện (xe, máy bay, tàu...)
+  khach_san       String?     // Thông tin khách sạn
+  lich_trinh      Json?       // Lịch trình chi tiết (JSON)
+  bao_gom         String[]    // Danh sách dịch vụ bao gồm
+  khong_bao_gom   String[]    // Danh sách dịch vụ không bao gồm
+  dieu_kien       String?     @db.Text // Điều kiện hủy/đổi
+  trang_thai      String      @default("dang_ban") // dang_ban, tam_dung, het_cho
+  so_cho_trong    Int         @default(0) // Số chỗ trống
+  so_cho_toi_da   Int         // Số chỗ tối đa
+  hinh_anh_chinh  String?     // Hình ảnh chính
+  images          TourImage[]
+  bookings        Booking[]
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
+}
+
+// Tour images
+model TourImage {
+  id          Int      @id @default(autoincrement())
+  tour_id     Int
+  url         String
+  alt_text    String?
+  thu_tu      Int      @default(0) // Thứ tự hiển thị
+  tour        Tour     @relation(fields: [tour_id], references: [id], onDelete: Cascade)
+  created_at  DateTime @default(now())
+}
+
+// Booking model
+model Booking {
+  id              Int      @id @default(autoincrement())
+  tour_id         Int
+  nguoi_dung_id   Int?    // Có thể null nếu đặt không đăng nhập
+  ho_ten          String
+  email           String
+  so_dien_thoai   String
+  dia_chi         String?
+  so_nguoi_lon    Int      @default(1)
+  so_tre_em       Int      @default(0)
+  ngay_khoi_hanh  DateTime
+  ghi_chu         String?  @db.Text
+  tong_tien       Float
+  trang_thai      String   @default("cho_xac_nhan") // cho_xac_nhan, da_xac_nhan, da_huy, da_hoan_tat
+  tour            Tour     @relation(fields: [tour_id], references: [id])
+  nguoi_dung      NguoiDung? @relation(fields: [nguoi_dung_id], references: [id], onDelete: SetNull)
+  thong_baos      ThongBao[]
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+}
