@@ -11,7 +11,9 @@ export async function middleware(request: NextRequest) {
     pathname === "/" || 
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/tours") ||
-    pathname.startsWith("/api/tours");
+    pathname.startsWith("/api/tours") ||
+    (pathname.startsWith("/api/blogs") && request.method === "GET") ||
+    pathname.startsWith("/blog");
 
   if (isPublicRoute) {
     return NextResponse.next();
@@ -57,6 +59,18 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/api/")) {
     // Tours API - public GET, admin POST/PUT/DELETE
     if (pathname.startsWith("/api/tours")) {
+      if (request.method === "GET") {
+        return NextResponse.next(); // Public read access
+      }
+      // POST/PUT/DELETE require admin
+      if (userRole !== "admin") {
+        return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+      }
+      return NextResponse.next();
+    }
+    
+    // Blogs API - public GET, admin POST/PUT/DELETE
+    if (pathname.startsWith("/api/blogs")) {
       if (request.method === "GET") {
         return NextResponse.next(); // Public read access
       }

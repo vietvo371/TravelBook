@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/jwt";
+import { Prisma } from "@prisma/client";
 
 // GET /api/blogs - Lấy danh sách blogs (public)
 export async function GET(req: NextRequest) {
@@ -20,8 +21,13 @@ export async function GET(req: NextRequest) {
     const token = req.cookies.get("token")?.value;
     let isAdmin = false;
     if (token) {
-      const payload = await verifyToken(token);
-      isAdmin = payload?.vai_tro === "admin";
+      try {
+        const payload = await verifyToken(token);
+        isAdmin = payload?.vai_tro === "admin";
+      } catch (error) {
+        // Token không hợp lệ, nhưng vẫn cho phép xem public blogs
+        // Không cần làm gì, isAdmin vẫn là false
+      }
     }
 
     if (!isAdmin) {
@@ -32,14 +38,14 @@ export async function GET(req: NextRequest) {
 
     if (search) {
       where.OR = [
-        { tieu_de: { contains: search, mode: "insensitive" } },
-        { mo_ta_ngan: { contains: search, mode: "insensitive" } },
-        { noi_dung: { contains: search, mode: "insensitive" } },
+        { tieu_de: { contains: search, mode: Prisma.QueryMode.insensitive } },
+        { mo_ta_ngan: { contains: search, mode: Prisma.QueryMode.insensitive } },
+        { noi_dung: { contains: search, mode: Prisma.QueryMode.insensitive } },
       ];
     }
 
     if (danh_muc) {
-      where.danh_muc = { contains: danh_muc, mode: "insensitive" };
+      where.danh_muc = { contains: danh_muc, mode: Prisma.QueryMode.insensitive };
     }
 
     const [blogs, total] = await Promise.all([

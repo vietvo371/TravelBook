@@ -32,8 +32,13 @@ export async function GET(
     const token = req.cookies.get("token")?.value;
     let isAdmin = false;
     if (token) {
-      const payload = await verifyToken(token);
-      isAdmin = payload?.vai_tro === "admin";
+      try {
+        const payload = await verifyToken(token);
+        isAdmin = payload?.vai_tro === "admin";
+      } catch (error) {
+        // Token không hợp lệ, nhưng vẫn cho phép xem public blogs
+        // Không cần làm gì, isAdmin vẫn là false
+      }
     }
 
     if (!isAdmin && blog.trang_thai !== "published") {
