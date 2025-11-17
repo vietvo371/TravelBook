@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     // Public chỉ xem published, admin có thể xem tất cả
     const token = req.cookies.get("token")?.value;
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
       try {
         const payload = await verifyToken(token);
         isAdmin = payload?.vai_tro === "admin";
-      } catch (error) {
+      } catch {
         // Token không hợp lệ, nhưng vẫn cho phép xem public blogs
         // Không cần làm gì, isAdmin vẫn là false
       }

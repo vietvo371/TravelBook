@@ -35,7 +35,7 @@ export async function GET(
       try {
         const payload = await verifyToken(token);
         isAdmin = payload?.vai_tro === "admin";
-      } catch (error) {
+      } catch {
         // Token không hợp lệ, nhưng vẫn cho phép xem public blogs
         // Không cần làm gì, isAdmin vẫn là false
       }
