@@ -11,7 +11,7 @@ import SidebarWidget from "@/layout/SidebarWidget";
 type NavItem = {
   name: string;
   href: string;
-  icon: React.ComponentType;
+  icon: React.ComponentType<{ className?: string }>;
 };
 
 const navItems: NavItem[] = [

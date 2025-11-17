@@ -36,13 +36,13 @@ export default function UserDropdown() {
           <Image
             width={44}
             height={44}
-            src={user?.hinh_anh || "/images/user/owner.jpg"}
-            alt={user?.ho_va_ten || "User"}
+            src={user?.avatar_url || "/images/user/owner.jpg"}
+            alt={user?.ho_ten || "User"}
           />
         </span>
 
         <span className="block mr-1 font-medium text-theme-sm">
-          {user?.ho_va_ten || "User"}
+          {user?.ho_ten || "User"}
         </span>
 
         <svg
@@ -72,7 +72,7 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            {user?.ho_va_ten}
+            {user?.ho_ten}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
             {user?.email}

@@ -45,7 +45,7 @@ export default function Navbar() {
           <div className="flex items-center space-x-3">
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900 dark:text-white">
-                {user.ho_va_ten}
+                {user.ho_ten}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {user.email}

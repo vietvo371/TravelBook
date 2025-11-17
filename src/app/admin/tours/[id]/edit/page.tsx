@@ -791,7 +791,7 @@ export default function EditTourPage() {
                         fill
                         className="object-cover"
                         onError={() => {
-                          showError("Không thể tải ảnh. Vui lòng kiểm tra URL.");
+                          error("Không thể tải ảnh. Vui lòng kiểm tra URL.");
                         }}
                       />
                     </div>

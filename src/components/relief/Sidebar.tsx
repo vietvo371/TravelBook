@@ -61,7 +61,7 @@ export default function Sidebar() {
                   <User size={20} />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">{user.ho_va_ten}</p>
+                  <p className="text-sm font-medium">{user.ho_ten}</p>
                   <p className="text-xs text-green-200">
                     {user.vai_tro === "admin"
                       ? "Quản trị viên"

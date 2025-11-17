@@ -23,7 +23,7 @@ export async function PUT(
     const userId = parseInt(id);
 
     // Users can only change their own password
-    if (payload.id !== userId) {
+    if (payload.userId !== userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

@@ -11,7 +11,7 @@ interface ConfirmModalProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  type?: "danger" | "warning" | "info";
+  type?: "danger" | "warning" | "info" | "success" | "error";
 }
 
 export const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -32,11 +32,14 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   const getButtonColor = () => {
     switch (type) {
       case "danger":
+      case "error":
         return "bg-red-600 hover:bg-red-700";
       case "warning":
         return "bg-warning-500 hover:bg-warning-600";
       case "info":
         return "bg-blue-light-500 hover:bg-blue-light-600";
+      case "success":
+        return "bg-green-600 hover:bg-green-700";
       default:
         return "bg-warning-500 hover:bg-warning-600";
     }
@@ -51,17 +54,21 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       <div className="text-center">
         <div className="flex items-center justify-center mb-4">
           <div className={`p-3 rounded-full ${
-            type === "danger" 
+            type === "danger" || type === "error"
               ? "bg-red-100 dark:bg-red-900/20" 
               : type === "warning"
               ? "bg-warning-100 dark:bg-warning-900/20"
+              : type === "success"
+              ? "bg-green-100 dark:bg-green-900/20"
               : "bg-blue-light-100 dark:bg-blue-light-900/20"
           }`}>
             <AlertTriangle className={`w-8 h-8 ${
-              type === "danger"
+              type === "danger" || type === "error"
                 ? "text-red-600 dark:text-red-400"
                 : type === "warning"
                 ? "text-warning-600 dark:text-warning-400"
+                : type === "success"
+                ? "text-green-600 dark:text-green-400"
                 : "text-blue-light-600 dark:text-blue-light-400"
             }`} />
           </div>

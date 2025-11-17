@@ -128,8 +128,8 @@ export default function AdminBlogsPage() {
   };
 
   // Extract unique categories from blogs
-  const categories = data?.blogs
-    ? Array.from(new Set(data.blogs.map((blog: Blog) => blog.danh_muc).filter(Boolean)))
+  const categories: string[] = data?.blogs
+    ? Array.from(new Set(data.blogs.map((blog: Blog) => blog.danh_muc).filter((cat: string | null): cat is string => Boolean(cat))))
     : [];
 
   return (
