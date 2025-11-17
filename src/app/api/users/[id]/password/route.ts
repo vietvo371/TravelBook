@@ -6,9 +6,10 @@ import bcrypt from "bcryptjs";
 // PUT /api/users/{id}/password - Change password
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = req.cookies.get("token")?.value;
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -19,7 +20,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = parseInt(params.id);
+    const userId = parseInt(id);
 
     // Users can only change their own password
     if (payload.id !== userId) {

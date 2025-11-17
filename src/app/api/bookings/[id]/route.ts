@@ -5,9 +5,10 @@ import { verifyToken } from "@/lib/jwt";
 // GET /api/bookings/[id] - Lấy chi tiết booking
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = req.cookies.get("token")?.value;
     
     if (!token) {
@@ -26,7 +27,7 @@ export async function GET(
     }
 
     const booking = await prisma.booking.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       include: {
         tour: {
           include: {
@@ -73,9 +74,10 @@ export async function GET(
 // PUT /api/bookings/[id] - Cập nhật booking (admin only hoặc owner)
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = req.cookies.get("token")?.value;
     
     if (!token) {
@@ -97,7 +99,7 @@ export async function PUT(
     const { trang_thai, ghi_chu } = body;
 
     const existingBooking = await prisma.booking.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       include: { tour: true },
     });
 
@@ -124,7 +126,7 @@ export async function PUT(
     if (ghi_chu !== undefined) updateData.ghi_chu = ghi_chu;
 
     const booking = await prisma.booking.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       data: updateData,
       include: {
         tour: {
@@ -150,9 +152,10 @@ export async function PUT(
 // DELETE /api/bookings/[id] - Hủy booking (admin hoặc owner)
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = req.cookies.get("token")?.value;
     
     if (!token) {
@@ -171,7 +174,7 @@ export async function DELETE(
     }
 
     const booking = await prisma.booking.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       include: { tour: true },
     });
 
@@ -205,7 +208,7 @@ export async function DELETE(
 
     // Delete booking
     await prisma.booking.delete({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
     });
 
     return NextResponse.json({ message: "Hủy đặt tour thành công" });

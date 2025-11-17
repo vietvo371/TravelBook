@@ -5,11 +5,12 @@ import { verifyToken } from "@/lib/jwt";
 // GET /api/blogs/[id] - Lấy chi tiết blog (public)
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const blog = await prisma.blog.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       include: {
         tac_gia: {
           select: {
@@ -50,7 +51,7 @@ export async function GET(
 
     // Tăng lượt xem
     await prisma.blog.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       data: {
         luot_xem: {
           increment: 1,
@@ -71,9 +72,10 @@ export async function GET(
 // PUT /api/blogs/[id] - Cập nhật blog (admin only)
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = req.cookies.get("token")?.value;
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -99,7 +101,7 @@ export async function PUT(
 
     // Check if blog exists
     const existingBlog = await prisma.blog.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
     });
 
     if (!existingBlog) {
@@ -125,7 +127,7 @@ export async function PUT(
 
     // Update blog
     const blog = await prisma.blog.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       data: {
         tieu_de: tieu_de !== undefined ? tieu_de : undefined,
         slug: slug !== undefined ? slug : undefined,
@@ -168,9 +170,10 @@ export async function PUT(
 // DELETE /api/blogs/[id] - Xóa blog (admin only)
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = req.cookies.get("token")?.value;
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -182,7 +185,7 @@ export async function DELETE(
     }
 
     const blog = await prisma.blog.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
     });
 
     if (!blog) {
@@ -193,7 +196,7 @@ export async function DELETE(
     }
 
     await prisma.blog.delete({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
     });
 
     return NextResponse.json({ message: "Xóa blog thành công" });

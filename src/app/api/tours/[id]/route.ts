@@ -4,11 +4,12 @@ import { prisma } from "@/lib/prisma";
 // GET /api/tours/[id] - Lấy chi tiết tour (public)
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const tour = await prisma.tour.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       include: {
         images: {
           orderBy: { thu_tu: "asc" },
@@ -36,9 +37,10 @@ export async function GET(
 // PUT /api/tours/[id] - Cập nhật tour (admin only)
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await req.json();
     const {
       ten_tour,
@@ -65,7 +67,7 @@ export async function PUT(
 
     // Check if tour exists
     const existingTour = await prisma.tour.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
     });
 
     if (!existingTour) {
@@ -77,7 +79,7 @@ export async function PUT(
 
     // Update tour
     const tour = await prisma.tour.update({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       data: {
         ten_tour,
         mo_ta,
@@ -108,14 +110,14 @@ export async function PUT(
     if (images !== undefined) {
       // Delete existing images
       await prisma.tourImage.deleteMany({
-        where: { tour_id: parseInt(params.id) },
+        where: { tour_id: parseInt(id) },
       });
 
       // Create new images
       if (images.length > 0) {
         await prisma.tourImage.createMany({
           data: images.map((img: any, index: number) => ({
-            tour_id: parseInt(params.id),
+            tour_id: parseInt(id),
             url: img.url,
             alt_text: img.alt_text,
             thu_tu: index,
@@ -125,7 +127,7 @@ export async function PUT(
     }
 
     const updatedTour = await prisma.tour.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       include: {
         images: {
           orderBy: { thu_tu: "asc" },
@@ -146,11 +148,12 @@ export async function PUT(
 // DELETE /api/tours/[id] - Xóa tour (admin only)
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const tour = await prisma.tour.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
     });
 
     if (!tour) {
@@ -161,7 +164,7 @@ export async function DELETE(
     }
 
     await prisma.tour.delete({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
     });
 
     return NextResponse.json({ message: "Xóa tour thành công" });

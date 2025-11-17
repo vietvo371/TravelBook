@@ -5,11 +5,12 @@ import { verifyToken } from "@/lib/jwt";
 // GET /api/blogs/slug/[slug] - Lấy chi tiết blog theo slug (public)
 export async function GET(
   req: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const { slug } = await params;
     const blog = await prisma.blog.findUnique({
-      where: { slug: params.slug },
+      where: { slug },
       include: {
         tac_gia: {
           select: {
@@ -50,7 +51,7 @@ export async function GET(
 
     // Tăng lượt xem
     await prisma.blog.update({
-      where: { slug: params.slug },
+      where: { slug },
       data: {
         luot_xem: {
           increment: 1,
