@@ -6,7 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, Plus, Trash2, Loader2, Upload } from "lucide-react";
 import { useAlert } from "@/hooks/useAlert";
-import { AlertModal } from "@/components/ui/AlertModal";
+import { useToast } from "@/context/ToastContext";
 import Image from "next/image";
 
 interface ImageItem {
@@ -18,7 +18,7 @@ export default function EditTourPage() {
   const router = useRouter();
   const params = useParams();
   const queryClient = useQueryClient();
-  const { showSuccess, showError, showWarning, alertState, closeAlert } = useAlert();
+  const { success, error, warning } = useToast();
   const tourId = parseInt(params.id as string);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadingImages, setUploadingImages] = useState<Record<number, boolean>>({});
@@ -114,10 +114,11 @@ export default function EditTourPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-tours"] });
       queryClient.invalidateQueries({ queryKey: ["tour", tourId] });
+      success("Cập nhật tour thành công!");
       router.push("/admin/tours");
     },
-    onError: (error: any) => {
-      showError(error.message || "Có lỗi xảy ra khi cập nhật tour");
+    onError: (err: any) => {
+      error(err.message || "Có lỗi xảy ra khi cập nhật tour");
       setIsSubmitting(false);
     },
   });
@@ -137,7 +138,7 @@ export default function EditTourPage() {
       !formData.phuong_tien ||
       !formData.so_cho_toi_da
     ) {
-      showWarning("Vui lòng điền đầy đủ thông tin bắt buộc");
+      warning("Vui lòng điền đầy đủ thông tin bắt buộc");
       setIsSubmitting(false);
       return;
     }
@@ -257,9 +258,9 @@ export default function EditTourPage() {
 
       const data = await res.json();
       updateImage(index, "url", data.url);
-      showSuccess("Upload ảnh thành công!");
-    } catch (error: any) {
-      showError(error.message || "Có lỗi xảy ra khi upload ảnh");
+      success("Upload ảnh thành công!");
+    } catch (err: any) {
+      error(err.message || "Có lỗi xảy ra khi upload ảnh");
     } finally {
       setUploadingImages({ ...uploadingImages, [index]: false });
     }
@@ -282,9 +283,9 @@ export default function EditTourPage() {
 
       const data = await res.json();
       setFormData({ ...formData, hinh_anh_chinh: data.url });
-      showSuccess("Upload ảnh chính thành công!");
-    } catch (error: any) {
-      showError(error.message || "Có lỗi xảy ra khi upload ảnh");
+      success("Upload ảnh chính thành công!");
+    } catch (err: any) {
+      error(err.message || "Có lỗi xảy ra khi upload ảnh");
     }
   };
 
@@ -725,7 +726,7 @@ export default function EditTourPage() {
                     fill
                     className="object-cover"
                     onError={() => {
-                      showError("Không thể tải ảnh. Vui lòng kiểm tra URL.");
+                      error("Không thể tải ảnh. Vui lòng kiểm tra URL.");
                     }}
                   />
                 </div>
@@ -836,17 +837,6 @@ export default function EditTourPage() {
           </button>
         </div>
       </form>
-
-      {/* Alert Modal */}
-      <AlertModal
-        type={alertState.type}
-        title={alertState.title}
-        message={alertState.message}
-        isOpen={alertState.isOpen}
-        onClose={closeAlert}
-        onConfirm={alertState.onConfirm}
-        confirmText={alertState.confirmText}
-      />
     </div>
   );
 }

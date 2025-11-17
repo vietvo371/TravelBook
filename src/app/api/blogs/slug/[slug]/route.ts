@@ -1,0 +1,65 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { verifyToken } from "@/lib/jwt";
+
+// GET /api/blogs/slug/[slug] - Lấy chi tiết blog theo slug (public)
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { slug: string } }
+) {
+  try {
+    const blog = await prisma.blog.findUnique({
+      where: { slug: params.slug },
+      include: {
+        tac_gia: {
+          select: {
+            id: true,
+            ho_ten: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    if (!blog) {
+      return NextResponse.json(
+        { error: "Không tìm thấy blog" },
+        { status: 404 }
+      );
+    }
+
+    // Public chỉ xem published, admin có thể xem tất cả
+    const token = req.cookies.get("token")?.value;
+    let isAdmin = false;
+    if (token) {
+      const payload = await verifyToken(token);
+      isAdmin = payload?.vai_tro === "admin";
+    }
+
+    if (!isAdmin && blog.trang_thai !== "published") {
+      return NextResponse.json(
+        { error: "Blog không khả dụng" },
+        { status: 404 }
+      );
+    }
+
+    // Tăng lượt xem
+    await prisma.blog.update({
+      where: { slug: params.slug },
+      data: {
+        luot_xem: {
+          increment: 1,
+        },
+      },
+    });
+
+    return NextResponse.json({ blog });
+  } catch (error) {
+    console.error("Error fetching blog by slug:", error);
+    return NextResponse.json(
+      { error: "Lỗi khi lấy thông tin blog" },
+      { status: 500 }
+    );
+  }
+}
+

@@ -16,7 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { useAlert } from "@/hooks/useAlert";
-import { AlertModal } from "@/components/ui/AlertModal";
+import { useToast } from "@/context/ToastContext";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 interface Tour {
@@ -38,7 +38,8 @@ interface Tour {
 export default function AdminToursPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { showSuccess, showError, showConfirm, alertState, confirmState, closeAlert, closeConfirm } = useAlert();
+  const { showConfirm, confirmState, closeConfirm } = useAlert();
+  const { success, error } = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
@@ -73,10 +74,10 @@ export default function AdminToursPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-tours"] });
-      showSuccess("Xóa tour thành công!");
+      success("Xóa tour thành công!");
     },
-    onError: (error: any) => {
-      showError(error.message || "Có lỗi xảy ra khi xóa tour");
+    onError: (err: any) => {
+      error(err.message || "Có lỗi xảy ra khi xóa tour");
     },
   });
 
@@ -315,17 +316,6 @@ export default function AdminToursPage() {
           )}
         </>
       )}
-
-      {/* Alert Modal */}
-      <AlertModal
-        type={alertState.type}
-        title={alertState.title}
-        message={alertState.message}
-        isOpen={alertState.isOpen}
-        onClose={closeAlert}
-        onConfirm={alertState.onConfirm}
-        confirmText={alertState.confirmText}
-      />
 
       {/* Confirm Modal */}
       <ConfirmModal

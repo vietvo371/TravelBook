@@ -202,7 +202,7 @@ export default function SignUpForm() {
                   />
                 </div>
 
-                <div>
+                {/* <div>
                   <Label>
                     Role<span className="text-error-500">*</span>
                   </Label>
@@ -218,7 +218,7 @@ export default function SignUpForm() {
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     Chỉ admin mới có thể tạo tài khoản admin. Vui lòng liên hệ quản trị viên.
                   </p>
-                </div>
+                </div> */}
 
                 <div>
                   <Label>

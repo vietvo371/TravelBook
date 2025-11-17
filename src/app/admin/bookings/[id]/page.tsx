@@ -22,7 +22,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useAlert } from "@/hooks/useAlert";
-import { AlertModal } from "@/components/ui/AlertModal";
+import { useToast } from "@/context/ToastContext";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 interface BookingDetail {
@@ -62,7 +62,8 @@ export default function BookingDetailPage() {
   const router = useRouter();
   const params = useParams();
   const queryClient = useQueryClient();
-  const { showSuccess, showError, showConfirm, alertState, confirmState, closeAlert, closeConfirm } = useAlert();
+  const { showConfirm, confirmState, closeConfirm } = useAlert();
+  const { success, error } = useToast();
   const bookingId = parseInt(params.id as string);
   const [isEditing, setIsEditing] = useState(false);
   const [ghiChu, setGhiChu] = useState("");
@@ -104,10 +105,10 @@ export default function BookingDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["booking", bookingId] });
       queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
       setIsEditing(false);
-      showSuccess("Cập nhật booking thành công!");
+      success("Cập nhật booking thành công!");
     },
-    onError: (error: any) => {
-      showError(error.message || "Có lỗi xảy ra");
+    onError: (err: any) => {
+      error(err.message || "Có lỗi xảy ra");
     },
   });
 
@@ -126,8 +127,8 @@ export default function BookingDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
       router.push("/admin/bookings");
     },
-    onError: (error: any) => {
-      showError(error.message || "Có lỗi xảy ra");
+    onError: (err: any) => {
+      error(err.message || "Có lỗi xảy ra");
     },
   });
 
@@ -605,17 +606,6 @@ export default function BookingDetailPage() {
           </div>
         </div>
       </div>
-
-      {/* Alert Modal */}
-      <AlertModal
-        type={alertState.type}
-        title={alertState.title}
-        message={alertState.message}
-        isOpen={alertState.isOpen}
-        onClose={closeAlert}
-        onConfirm={alertState.onConfirm}
-        confirmText={alertState.confirmText}
-      />
 
       {/* Confirm Modal */}
       <ConfirmModal

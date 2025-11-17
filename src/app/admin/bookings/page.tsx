@@ -16,7 +16,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useAlert } from "@/hooks/useAlert";
-import { AlertModal } from "@/components/ui/AlertModal";
+import { useToast } from "@/context/ToastContext";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 interface Booking {
@@ -45,7 +45,8 @@ interface Booking {
 
 export default function AdminBookingsPage() {
   const queryClient = useQueryClient();
-  const { showSuccess, showError, showConfirm, alertState, confirmState, closeAlert, closeConfirm } = useAlert();
+  const { showConfirm, confirmState, closeConfirm } = useAlert();
+  const { success, error } = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
@@ -113,10 +114,10 @@ export default function AdminBookingsPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["admin-statistics"] });
-      showSuccess("Cập nhật trạng thái thành công!");
+      success("Cập nhật trạng thái thành công!");
     },
-    onError: (error: any) => {
-      showError(error.message || "Có lỗi xảy ra");
+    onError: (err: any) => {
+      error(err.message || "Có lỗi xảy ra");
     },
   });
 
@@ -135,10 +136,10 @@ export default function AdminBookingsPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["admin-statistics"] });
-      showSuccess("Xóa booking thành công!");
+      success("Xóa booking thành công!");
     },
-    onError: (error: any) => {
-      showError(error.message || "Có lỗi xảy ra khi xóa booking");
+    onError: (err: any) => {
+      error(err.message || "Có lỗi xảy ra khi xóa booking");
     },
   });
 
@@ -456,17 +457,6 @@ export default function AdminBookingsPage() {
           )}
         </>
       )}
-
-      {/* Alert Modal */}
-      <AlertModal
-        type={alertState.type}
-        title={alertState.title}
-        message={alertState.message}
-        isOpen={alertState.isOpen}
-        onClose={closeAlert}
-        onConfirm={alertState.onConfirm}
-        confirmText={alertState.confirmText}
-      />
 
       {/* Confirm Modal */}
       <ConfirmModal

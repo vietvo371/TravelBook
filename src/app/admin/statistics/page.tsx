@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart3, Users, DollarSign, Calendar, TrendingUp, Loader2 } from "lucide-react";
+import { BarChart3, Users, DollarSign, Calendar, TrendingUp, Loader2, RotateCcw } from "lucide-react";
 import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
 
@@ -28,20 +28,62 @@ interface StatisticsData {
   }>;
 }
 
+// Helper function to get today's date in YYYY-MM-DD format
+const getTodayDate = () => {
+  const today = new Date();
+  return today.toISOString().split("T")[0];
+};
+
 export default function AdminStatisticsPage() {
-  const [filters, setFilters] = useState<{ from: string; to: string }>({
-    from: "",
-    to: "",
+  // Refs for date inputs
+  const fromDateRef = useRef<HTMLInputElement>(null);
+  const toDateRef = useRef<HTMLInputElement>(null);
+
+  // Initialize with today's date
+  const [filters, setFilters] = useState<{ from: string; to: string }>(() => {
+    const today = getTodayDate();
+    return {
+      from: today,
+      to: today,
+    };
   });
+
+  // Function to reset to today
+  const resetToToday = () => {
+    const today = getTodayDate();
+    setFilters({
+      from: today,
+      to: today,
+    });
+  };
+
+  // Function to open date picker
+  const openFromDatePicker = () => {
+    fromDateRef.current?.showPicker?.();
+  };
+
+  const openToDatePicker = () => {
+    toDateRef.current?.showPicker?.();
+  };
 
   const { data, isLoading, error } = useQuery<{ statistics: StatisticsData }>({
     queryKey: ["admin-statistics", filters],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters.from && filters.to) {
-        params.append("thoi_gian_bat_dau", new Date(filters.from).toISOString());
-        params.append("thoi_gian_ket_thuc", new Date(filters.to).toISOString());
-      }
+      // Always send date range (default to today if not set)
+      const fromDate = filters.from || getTodayDate();
+      const toDate = filters.to || getTodayDate();
+      
+      // Set time to start of day for from and end of day for to
+      const fromDateTime = new Date(fromDate);
+      fromDateTime.setHours(0, 0, 0, 0);
+      
+      const toDateTime = new Date(toDate);
+      toDateTime.setHours(23, 59, 59, 999);
+      
+      params.append("thoi_gian_bat_dau", fromDateTime.toISOString());
+      params.append("thoi_gian_ket_thuc", toDateTime.toISOString());
+      
       const res = await fetch(`/api/admin/statistics?${params.toString()}`, {
         cache: "no-store",
       });
@@ -199,33 +241,83 @@ export default function AdminStatisticsPage() {
 
       {/* Filters */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-gray-400" />
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="flex flex-col md:flex-row gap-4 items-end">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Từ ngày:
             </label>
-            <input
-              type="date"
-              value={filters.from}
-              onChange={(e) =>
-                setFilters({ ...filters, from: e.target.value })
-              }
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
+            <div className="relative">
+              <input
+                ref={fromDateRef}
+                type="date"
+                value={filters.from}
+                onChange={(e) =>
+                  setFilters({ ...filters, from: e.target.value })
+                }
+                onInput={(e) => {
+                  // Allow manual input
+                  const target = e.target as HTMLInputElement;
+                  setFilters({ ...filters, from: target.value });
+                }}
+                max={filters.to || getTodayDate()}
+                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white cursor-text"
+                placeholder="DD/MM/YYYY hoặc click để chọn"
+              />
+              <button
+                type="button"
+                onClick={openFromDatePicker}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-primary transition-colors"
+                title="Chọn ngày"
+              >
+                <Calendar className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Đến ngày:
             </label>
-            <input
-              type="date"
-              value={filters.to}
-              onChange={(e) => setFilters({ ...filters, to: e.target.value })}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
+            <div className="relative">
+              <input
+                ref={toDateRef}
+                type="date"
+                value={filters.to}
+                onChange={(e) => setFilters({ ...filters, to: e.target.value })}
+                onInput={(e) => {
+                  // Allow manual input
+                  const target = e.target as HTMLInputElement;
+                  setFilters({ ...filters, to: target.value });
+                }}
+                min={filters.from}
+                max={getTodayDate()}
+                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white cursor-text"
+                placeholder="DD/MM/YYYY hoặc click để chọn"
+              />
+              <button
+                type="button"
+                onClick={openToDatePicker}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-primary transition-colors"
+                title="Chọn ngày"
+              >
+                <Calendar className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+          <div className="flex items-end">
+            <button
+              onClick={resetToToday}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap h-[42px]"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Hiện ngày
+            </button>
           </div>
         </div>
+        {filters.from === filters.to && filters.from === getTodayDate() && (
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            Đang hiển thị thống kê cho hôm nay ({new Date().toLocaleDateString("vi-VN")})
+          </p>
+        )}
       </div>
 
       {/* Summary Cards */}

@@ -5,14 +5,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, X, Plus, Loader2 } from "lucide-react";
-import { useAlert } from "@/hooks/useAlert";
-import { AlertModal } from "@/components/ui/AlertModal";
+import { useToast } from "@/context/ToastContext";
 
 export default function EditBlogPage() {
   const router = useRouter();
   const params = useParams();
   const queryClient = useQueryClient();
-  const { showSuccess, showError, showWarning, alertState, closeAlert } = useAlert();
+  const { success, error, warning } = useToast();
   const blogId = parseInt(params.id as string);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -75,10 +74,11 @@ export default function EditBlogPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-blogs"] });
       queryClient.invalidateQueries({ queryKey: ["blog", blogId] });
+      success("Cập nhật blog thành công!");
       router.push("/admin/blogs");
     },
-    onError: (error: any) => {
-      showError(error.message || "Có lỗi xảy ra khi cập nhật blog");
+    onError: (err: any) => {
+      error(err.message || "Có lỗi xảy ra khi cập nhật blog");
       setIsSubmitting(false);
     },
   });
@@ -122,7 +122,7 @@ export default function EditBlogPage() {
 
     // Validate required fields
     if (!formData.tieu_de || !formData.slug || !formData.noi_dung) {
-      showWarning("Vui lòng điền đầy đủ thông tin bắt buộc");
+      warning("Vui lòng điền đầy đủ thông tin bắt buộc");
       setIsSubmitting(false);
       return;
     }
@@ -389,17 +389,6 @@ export default function EditBlogPage() {
           </button>
         </div>
       </form>
-
-      {/* Alert Modal */}
-      <AlertModal
-        type={alertState.type}
-        title={alertState.title}
-        message={alertState.message}
-        isOpen={alertState.isOpen}
-        onClose={closeAlert}
-        onConfirm={alertState.onConfirm}
-        confirmText={alertState.confirmText}
-      />
     </div>
   );
 }

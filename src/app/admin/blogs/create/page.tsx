@@ -5,13 +5,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, X, Plus, Loader2 } from "lucide-react";
-import { useAlert } from "@/hooks/useAlert";
-import { AlertModal } from "@/components/ui/AlertModal";
+import { useToast } from "@/context/ToastContext";
 
 export default function CreateBlogPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { showSuccess, showError, showWarning, alertState, closeAlert } = useAlert();
+  const { success, error, warning } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -43,10 +42,11 @@ export default function CreateBlogPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-blogs"] });
+      success("Tạo blog thành công!");
       router.push("/admin/blogs");
     },
-    onError: (error: any) => {
-      showError(error.message || "Có lỗi xảy ra khi tạo blog");
+    onError: (err: any) => {
+      error(err.message || "Có lỗi xảy ra khi tạo blog");
       setIsSubmitting(false);
     },
   });
@@ -89,7 +89,7 @@ export default function CreateBlogPage() {
 
     // Validate required fields
     if (!formData.tieu_de || !formData.slug || !formData.noi_dung) {
-      showWarning("Vui lòng điền đầy đủ thông tin bắt buộc");
+      warning("Vui lòng điền đầy đủ thông tin bắt buộc");
       setIsSubmitting(false);
       return;
     }
@@ -334,17 +334,6 @@ export default function CreateBlogPage() {
           </button>
         </div>
       </form>
-
-      {/* Alert Modal */}
-      <AlertModal
-        type={alertState.type}
-        title={alertState.title}
-        message={alertState.message}
-        isOpen={alertState.isOpen}
-        onClose={closeAlert}
-        onConfirm={alertState.onConfirm}
-        confirmText={alertState.confirmText}
-      />
     </div>
   );
 }

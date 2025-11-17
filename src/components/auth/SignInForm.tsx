@@ -69,7 +69,7 @@ export default function SignInForm() {
 
       login(data.user, data.token);
       success("🎉 Đăng nhập thành công!");
-      
+
       // Redirect based on redirect URL or role
       if (redirectUrl) {
         router.push(redirectUrl);
@@ -162,6 +162,7 @@ export default function SignInForm() {
                 </span>
               </div>
             </div>
+          
             <form onSubmit={handleSubmit}>
               <div className="space-y-6">
                 {/* {error  && (
@@ -173,13 +174,13 @@ export default function SignInForm() {
                   <Label>
                     Email <span className="text-error-500">*</span>{" "}
                   </Label>
-                    <Input 
-                    placeholder="Nhập email" 
+                  <Input
+                    placeholder="Nhập email"
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    required 
+                    required
                   />
                 </div>
                 <div>
@@ -222,8 +223,8 @@ export default function SignInForm() {
                   </Link>
                 </div>
                 <div>
-                  <Button 
-                    className="w-full" 
+                  <Button
+                    className="w-full"
                     size="sm"
                     variant="primary"
                     disabled={loading}
@@ -244,6 +245,11 @@ export default function SignInForm() {
                   Sign Up
                 </Link>
               </p>
+            </div>
+            <div className="text-center text-sm text-gray-500 dark:text-gray-400 mt-5 bg-gray-100 dark:bg-gray-800 p-2 rounded-lg">
+              <span className="font-bold">Admin:</span> admin@travelbook.com / admin123
+              <br />
+              <span className="font-bold">Customer:</span> khach1@example.com / 123456
             </div>
           </div>
         </div>
