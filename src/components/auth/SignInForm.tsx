@@ -5,7 +5,7 @@ import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import { useToast } from "@/context/ToastContext";
@@ -26,6 +26,15 @@ export default function SignInForm() {
     mat_khau: "",
   });
   const [loading, setLoading] = useState(false);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+
+  // Get redirect URL from query params
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      setRedirectUrl(params.get("redirect"));
+    }
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -61,17 +70,17 @@ export default function SignInForm() {
       login(data.user, data.token);
       success("🎉 Đăng nhập thành công!");
       
-      // Redirect based on role
-      const role = data.user.vai_tro;
-      console.log("Redirecting based on role:", role);
-      
-      if (role === "admin") {
-        console.log("Redirecting to admin dashboard");
-        router.push("/admin/dashboard");
+      // Redirect based on redirect URL or role
+      if (redirectUrl) {
+        router.push(redirectUrl);
       } else {
-        // Khách hàng (khach_hang) - redirect về trang tours
-        console.log("Redirecting to tours page");
-        router.push("/tours");
+        const role = data.user.vai_tro;
+        if (role === "admin") {
+          router.push("/admin/dashboard");
+        } else {
+          // Khách hàng (khach_hang) - redirect về trang tours
+          router.push("/tours");
+        }
       }
     } catch (err: any) {
       showError(err.message || "Có lỗi xảy ra, vui lòng thử lại!");

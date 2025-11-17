@@ -1,11 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import PublicNavbar from "@/components/layout/PublicNavbar";
+import { useAuthStore } from "@/store/authStore";
+import { useAlert } from "@/hooks/useAlert";
+import { AlertModal } from "@/components/ui/AlertModal";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Thumbs, FreeMode, Zoom } from "swiper/modules";
+import type { Swiper as SwiperType } from "swiper";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/thumbs";
+import "swiper/css/free-mode";
+import "swiper/css/zoom";
 
 interface Tour {
   id: number;
@@ -33,7 +44,13 @@ interface Tour {
 export default function TourDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { user, isAuthenticated } = useAuthStore();
+  const { showSuccess, alertState, closeAlert } = useAlert();
   const [showBookingForm, setShowBookingForm] = useState(false);
+  const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
+  const [mainSwiper, setMainSwiper] = useState<SwiperType | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showLightbox, setShowLightbox] = useState(false);
   const [bookingData, setBookingData] = useState({
     ho_ten: "",
     email: "",
@@ -44,6 +61,19 @@ export default function TourDetailPage() {
     ngay_khoi_hanh: "",
     ghi_chu: "",
   });
+
+  // Auto-fill user data when logged in
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setBookingData((prev) => ({
+        ...prev,
+        ho_ten: user.ho_ten || "",
+        email: user.email || "",
+        so_dien_thoai: user.so_dien_thoai || "",
+        dia_chi: user.dia_chi || "",
+      }));
+    }
+  }, [isAuthenticated, user]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["tour", params.id],
@@ -74,7 +104,7 @@ export default function TourDetailPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tour", params.id] });
-      alert("Đặt tour thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất.");
+      showSuccess("Đặt tour thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất.");
       setShowBookingForm(false);
       setBookingData({
         ho_ten: "",
@@ -108,7 +138,22 @@ export default function TourDetailPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if user is logged in
+    if (!isAuthenticated || !user) {
+      router.push(`/login?redirect=/tours/${params.id}`);
+      return;
+    }
+
     bookingMutation.mutate(bookingData);
+  };
+
+  const handleBookingClick = () => {
+    if (!isAuthenticated || !user) {
+      router.push(`/login?redirect=/tours/${params.id}`);
+      return;
+    }
+    setShowBookingForm(!showBookingForm);
   };
 
   if (isLoading) {
@@ -148,7 +193,21 @@ export default function TourDetailPage() {
     );
   }
 
-  const mainImage = tour.hinh_anh_chinh || (tour.images && tour.images[0]?.url) || "/images/cards/card-01.jpg";
+    // Prepare images array
+  const allImages = [];
+  if (tour.hinh_anh_chinh) {
+    allImages.push({ id: 0, url: tour.hinh_anh_chinh, alt_text: tour.ten_tour });
+  }
+  if (tour.images && tour.images.length > 0) {
+    tour.images.forEach((img) => {
+      if (img.url !== tour.hinh_anh_chinh) {
+        allImages.push(img);
+      }
+    });
+  }
+  if (allImages.length === 0) {
+    allImages.push({ id: 0, url: "/images/cards/card-01.jpg", alt_text: tour.ten_tour });
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -165,34 +224,145 @@ export default function TourDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
-            {/* Images */}
-            <div className="mb-6">
-              <div className="relative h-96 w-full rounded-lg overflow-hidden mb-4">
-                <Image
-                  src={mainImage}
-                  alt={tour.ten_tour}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              {tour.images && tour.images.length > 1 && (
-                <div className="grid grid-cols-4 gap-2">
-                  {tour.images.slice(0, 4).map((img) => (
-                    <div
-                      key={img.id}
-                      className="relative h-24 w-full rounded overflow-hidden"
-                    >
-                      <Image
-                        src={img.url}
-                        alt={img.alt_text || tour.ten_tour}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
+            {/* Image Gallery */}
+            <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+              {/* Main Image Swiper */}
+              <div className="relative mb-4">
+                <Swiper
+                  onSwiper={setMainSwiper}
+                  modules={[Navigation, Thumbs, Zoom]}
+                  navigation={allImages.length > 1}
+                  thumbs={{ swiper: thumbsSwiper && !thumbsSwiper.destroyed ? thumbsSwiper : null }}
+                  zoom={{
+                    maxRatio: 3,
+                    minRatio: 1,
+                  }}
+                  className="main-swiper rounded-lg overflow-hidden"
+                  onSlideChange={(swiper) => {
+                    setSelectedImageIndex(swiper.activeIndex);
+                    if (thumbsSwiper && !thumbsSwiper.destroyed) {
+                      thumbsSwiper.slideTo(swiper.activeIndex);
+                    }
+                  }}
+                >
+                  {allImages.map((img, index) => (
+                    <SwiperSlide key={img.id || index} className="relative">
+                      <div className="swiper-zoom-container">
+                        <div className="relative h-[500px] w-full cursor-zoom-in" onClick={() => setShowLightbox(true)}>
+                          <Image
+                            src={img.url}
+                            alt={img.alt_text || tour.ten_tour}
+                            fill
+                            className="object-cover"
+                            priority={index === 0}
+                          />
+                        </div>
+                      </div>
+                    </SwiperSlide>
                   ))}
-                </div>
+                </Swiper>
+                
+                {/* Image Counter */}
+                {allImages.length > 1 && (
+                  <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm z-10">
+                    {selectedImageIndex + 1} / {allImages.length}
+                  </div>
+                )}
+              </div>
+
+              {/* Thumbnail Swiper */}
+              {allImages.length > 1 && (
+                <Swiper
+                  onSwiper={setThumbsSwiper}
+                  modules={[FreeMode, Navigation, Thumbs]}
+                  spaceBetween={10}
+                  slidesPerView={4}
+                  freeMode={true}
+                  watchSlidesProgress={true}
+                  className="thumbnail-swiper"
+                  breakpoints={{
+                    640: {
+                      slidesPerView: 4,
+                    },
+                    768: {
+                      slidesPerView: 5,
+                    },
+                    1024: {
+                      slidesPerView: 6,
+                    },
+                  }}
+                >
+                  {allImages.map((img, index) => (
+                    <SwiperSlide
+                      key={img.id || index}
+                      className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
+                        selectedImageIndex === index
+                          ? "border-primary scale-105"
+                          : "border-transparent opacity-60 hover:opacity-100"
+                      }`}
+                      onClick={() => {
+                        setSelectedImageIndex(index);
+                        if (mainSwiper && !mainSwiper.destroyed) {
+                          mainSwiper.slideTo(index);
+                        }
+                      }}
+                    >
+                      <div className="relative h-20 w-full">
+                        <Image
+                          src={img.url}
+                          alt={img.alt_text || tour.ten_tour}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
               )}
             </div>
+
+            {/* Lightbox Modal */}
+            {showLightbox && (
+              <div
+                className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+                onClick={() => setShowLightbox(false)}
+              >
+                <button
+                  onClick={() => setShowLightbox(false)}
+                  className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
+                >
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <div className="relative max-w-7xl w-full h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                  <Swiper
+                    modules={[Navigation, Zoom]}
+                    navigation
+                    zoom={{
+                      maxRatio: 3,
+                      minRatio: 1,
+                    }}
+                    initialSlide={selectedImageIndex}
+                    className="w-full h-full"
+                  >
+                    {allImages.map((img, index) => (
+                      <SwiperSlide key={img.id || index} className="flex items-center justify-center">
+                        <div className="swiper-zoom-container">
+                          <Image
+                            src={img.url}
+                            alt={img.alt_text || tour.ten_tour}
+                            width={1200}
+                            height={800}
+                            className="object-contain max-h-[90vh]"
+                          />
+                        </div>
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                </div>
+              </div>
+            )}
 
             {/* Tour Info */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
@@ -293,43 +463,111 @@ export default function TourDetailPage() {
           {/* Booking Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 sticky top-8">
-              <div className="mb-4">
-                <div className="text-3xl font-bold text-primary mb-2">
-                  {formatPrice(tour.gia_nguoi_lon)}
+              <div className="mb-6">
+                <div className="flex items-baseline gap-2 mb-2">
+                  <div className="text-3xl font-bold text-primary">
+                    {formatPrice(tour.gia_nguoi_lon)}
+                  </div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    / người lớn
+                  </span>
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  / người lớn
-                </p>
                 {tour.gia_tre_em && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     Trẻ em: {formatPrice(tour.gia_tre_em)}
                   </p>
                 )}
               </div>
 
-              <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Còn {tour.so_cho_trong} / {tour.so_cho_toi_da} chỗ trống
+              <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Số chỗ còn lại
+                  </span>
+                  <span className="text-lg font-bold text-primary">
+                    {tour.so_cho_trong}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div
+                    className="bg-primary h-2 rounded-full transition-all"
+                    style={{
+                      width: `${(tour.so_cho_trong / tour.so_cho_toi_da) * 100}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {tour.so_cho_trong} / {tour.so_cho_toi_da} chỗ
                 </p>
               </div>
 
               {tour.so_cho_trong > 0 ? (
-                <button
-                  onClick={() => setShowBookingForm(!showBookingForm)}
-                  className="w-full px-4 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-colors"
-                >
-                  {showBookingForm ? "Ẩn form đặt tour" : "Đặt tour ngay"}
-                </button>
+                <>
+                  {!isAuthenticated ? (
+                    <div className="space-y-3">
+                      <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          <div>
+                            <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-1">
+                              Vui lòng đăng nhập
+                            </p>
+                            <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                              Bạn cần đăng nhập để đặt tour
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <Link
+                        href={`/login?redirect=/tours/${params.id}`}
+                        className="block w-full px-4 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-colors text-center shadow-lg hover:shadow-xl"
+                      >
+                        Đăng nhập để đặt tour
+                      </Link>
+                      <Link
+                        href="/register"
+                        className="block w-full px-4 py-2 text-center text-sm text-primary hover:underline"
+                      >
+                        Chưa có tài khoản? Đăng ký ngay
+                      </Link>
+                    </div>
+                  ) : (
+                    <>
+                      {!showBookingForm ? (
+                        <button
+                          onClick={handleBookingClick}
+                          className="w-full px-4 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-colors shadow-lg hover:shadow-xl"
+                        >
+                          Đặt tour ngay
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleBookingClick}
+                          className="w-full px-4 py-2 mb-4 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+                        >
+                          ← Quay lại
+                        </button>
+                      )}
+                    </>
+                  )}
+                </>
               ) : (
-                <button
-                  disabled
-                  className="w-full px-4 py-3 bg-gray-400 text-white rounded-lg font-semibold cursor-not-allowed"
-                >
-                  Hết chỗ
-                </button>
+                <div className="space-y-3">
+                  <button
+                    disabled
+                    className="w-full px-4 py-3 bg-gray-400 text-white rounded-lg font-semibold cursor-not-allowed"
+                  >
+                    Hết chỗ
+                  </button>
+                  <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+                    Tour này đã hết chỗ. Vui lòng chọn tour khác.
+                  </p>
+                </div>
               )}
 
-              {showBookingForm && (
+              {showBookingForm && isAuthenticated && (
                 <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -483,6 +721,17 @@ export default function TourDetailPage() {
         </div>
         </div>
       </div>
+
+      {/* Alert Modal */}
+      <AlertModal
+        type={alertState.type}
+        title={alertState.title}
+        message={alertState.message}
+        isOpen={alertState.isOpen}
+        onClose={closeAlert}
+        onConfirm={alertState.onConfirm}
+        confirmText={alertState.confirmText}
+      />
     </div>
   );
 }

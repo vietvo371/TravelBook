@@ -23,6 +23,7 @@ model NguoiDung {
   thong_baos   ThongBao[]
   tokens       Token[]
   bookings     Booking[]
+  blogs        Blog[]   // Blog posts written by this user
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
 }
@@ -112,3 +113,24 @@ model Booking {
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 }
+
+// Blog model
+model Blog {
+  id            Int      @id @default(autoincrement())
+  tieu_de       String
+  slug          String   @unique // URL-friendly slug
+  mo_ta_ngan    String?  // Mô tả ngắn cho preview
+  noi_dung      String   @db.Text // Nội dung bài viết
+  hinh_anh      String?  // Hình ảnh đại diện
+  tac_gia_id    Int?     // ID người viết (admin)
+  tac_gia       NguoiDung? @relation(fields: [tac_gia_id], references: [id], onDelete: SetNull)
+  danh_muc      String?  // Danh mục blog
+  tags          String[] // Tags
+  luot_xem      Int      @default(0) // Số lượt xem
+  trang_thai    String   @default("draft") // draft, published, archived
+  ngay_dang     DateTime? // Ngày đăng bài
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+}
+
+// Thêm relation vào NguoiDung

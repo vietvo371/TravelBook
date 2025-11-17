@@ -1,18 +1,28 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import Image from "next/image";
 import PublicNavbar from "@/components/layout/PublicNavbar";
+import { Loader2 } from "lucide-react";
 
 interface BlogPost {
   id: number;
-  title: string;
-  excerpt: string;
-  image: string;
-  date: string;
-  author: string;
-  category: string;
+  tieu_de: string;
+  slug: string;
+  mo_ta_ngan: string | null;
+  hinh_anh: string | null;
+  danh_muc: string | null;
+  tags: string[];
+  luot_xem: number;
+  ngay_dang: string | null;
+  created_at: string;
+  tac_gia: {
+    id: number;
+    ho_ten: string;
+    email: string;
+  } | null;
 }
 
 export default function BlogPage() {
@@ -21,146 +31,31 @@ export default function BlogPage() {
   const [page, setPage] = useState(1);
   const postsPerPage = 6;
 
-  const blogPosts: BlogPost[] = [
-    {
-      id: 1,
-      title: "10 Điểm Đến Du Lịch Đẹp Nhất Việt Nam 2025",
-      excerpt: "Khám phá những địa điểm du lịch tuyệt vời nhất tại Việt Nam, từ phố cổ Hội An đến vịnh Hạ Long hùng vĩ...",
-      image: "/images/cards/card-01.jpg",
-      date: "15/11/2025",
-      author: "TravelBook Team",
-      category: "Du lịch trong nước",
-    },
-    {
-      id: 2,
-      title: "Bí Quyết Đặt Tour Du Lịch Tiết Kiệm",
-      excerpt: "Những mẹo hay giúp bạn đặt tour du lịch với giá tốt nhất, tận dụng các chương trình khuyến mãi...",
-      image: "/images/cards/card-02.jpg",
-      date: "12/11/2025",
-      author: "TravelBook Team",
-      category: "Tips du lịch",
-    },
-    {
-      id: 3,
-      title: "Hành Trình Khám Phá Đà Lạt - Thành Phố Ngàn Hoa",
-      excerpt: "Trải nghiệm Đà Lạt với khí hậu mát mẻ, cảnh đẹp thiên nhiên và văn hóa đặc sắc của vùng cao nguyên...",
-      image: "/images/cards/card-03.jpg",
-      date: "10/11/2025",
-      author: "TravelBook Team",
-      category: "Du lịch trong nước",
-    },
-    {
-      id: 4,
-      title: "Checklist Chuẩn Bị Cho Chuyến Du Lịch Dài Ngày",
-      excerpt: "Danh sách đầy đủ những vật dụng cần thiết cho chuyến du lịch dài ngày, đảm bảo bạn không quên gì...",
-      image: "/images/cards/card-01.jpg",
-      date: "8/11/2025",
-      author: "TravelBook Team",
-      category: "Tips du lịch",
-    },
-    {
-      id: 5,
-      title: "Phú Quốc - Thiên Đường Biển Đảo Của Việt Nam",
-      excerpt: "Khám phá hòn đảo ngọc Phú Quốc với những bãi biển tuyệt đẹp, resort sang trọng và ẩm thực hải sản tươi ngon...",
-      image: "/images/cards/card-02.jpg",
-      date: "5/11/2025",
-      author: "TravelBook Team",
-      category: "Du lịch trong nước",
-    },
-    {
-      id: 6,
-      title: "Những Lưu Ý Khi Đặt Tour Du Lịch Quốc Tế",
-      excerpt: "Các điều cần biết khi đặt tour du lịch nước ngoài: visa, bảo hiểm, tiền tệ và các thủ tục cần thiết...",
-      image: "/images/cards/card-03.jpg",
-      date: "3/11/2025",
-      author: "TravelBook Team",
-      category: "Du lịch quốc tế",
-    },
-    {
-      id: 7,
-      title: "Sapa - Nơi Gặp Gỡ Giữa Trời Và Đất",
-      excerpt: "Khám phá Sapa với những ruộng bậc thang tuyệt đẹp, văn hóa dân tộc đa dạng và khí hậu mát mẻ quanh năm...",
-      image: "/images/cards/card-01.jpg",
-      date: "1/11/2025",
-      author: "TravelBook Team",
-      category: "Du lịch trong nước",
-    },
-    {
-      id: 8,
-      title: "Cách Chọn Tour Du Lịch Phù Hợp Với Ngân Sách",
-      excerpt: "Hướng dẫn chi tiết cách lựa chọn tour du lịch phù hợp với ngân sách của bạn mà vẫn đảm bảo chất lượng...",
-      image: "/images/cards/card-02.jpg",
-      date: "28/10/2025",
-      author: "TravelBook Team",
-      category: "Tips du lịch",
-    },
-    {
-      id: 9,
-      title: "Thái Lan - Điểm Đến Lý Tưởng Cho Du Lịch Quốc Tế",
-      excerpt: "Khám phá đất nước Thái Lan với văn hóa đặc sắc, ẩm thực phong phú và những điểm đến nổi tiếng...",
-      image: "/images/cards/card-03.jpg",
-      date: "25/10/2025",
-      author: "TravelBook Team",
-      category: "Du lịch quốc tế",
-    },
-    {
-      id: 10,
-      title: "Hạ Long - Kỳ Quan Thiên Nhiên Thế Giới",
-      excerpt: "Trải nghiệm vịnh Hạ Long với hàng nghìn đảo đá vôi kỳ vĩ, hang động bí ẩn và cảnh quan thiên nhiên tuyệt đẹp...",
-      image: "/images/cards/card-01.jpg",
-      date: "22/10/2025",
-      author: "TravelBook Team",
-      category: "Du lịch trong nước",
-    },
-    {
-      id: 11,
-      title: "Nhật Bản - Xứ Sở Hoa Anh Đào",
-      excerpt: "Khám phá Nhật Bản với văn hóa truyền thống độc đáo, ẩm thực tinh tế và cảnh quan thiên nhiên tuyệt đẹp...",
-      image: "/images/cards/card-02.jpg",
-      date: "20/10/2025",
-      author: "TravelBook Team",
-      category: "Du lịch quốc tế",
-    },
-    {
-      id: 12,
-      title: "Mẹo Đóng Gói Hành Lý Thông Minh Cho Chuyến Du Lịch",
-      excerpt: "Những bí quyết đóng gói hành lý hiệu quả, tiết kiệm không gian và đảm bảo bạn có đủ mọi thứ cần thiết...",
-      image: "/images/cards/card-03.jpg",
-      date: "18/10/2025",
-      author: "TravelBook Team",
-      category: "Tips du lịch",
-    },
-  ];
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["blogs", page, search, selectedCategory],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: postsPerPage.toString(),
+        trang_thai: "published",
+      });
+      if (search) params.append("search", search);
+      if (selectedCategory !== "Tất cả") params.append("danh_muc", selectedCategory);
 
-  const categories = ["Tất cả", "Du lịch trong nước", "Du lịch quốc tế", "Tips du lịch"];
+      const res = await fetch(`/api/blogs?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch blogs");
+      return res.json();
+    },
+  });
 
-  // Filter and search posts
-  const filteredPosts = useMemo(() => {
-    let filtered = blogPosts;
-
-    // Filter by category
-    if (selectedCategory !== "Tất cả") {
-      filtered = filtered.filter((post) => post.category === selectedCategory);
-    }
-
-    // Filter by search
-    if (search.trim()) {
-      const searchLower = search.toLowerCase();
-      filtered = filtered.filter(
-        (post) =>
-          post.title.toLowerCase().includes(searchLower) ||
-          post.excerpt.toLowerCase().includes(searchLower)
-      );
-    }
-
-    return filtered;
-  }, [search, selectedCategory, blogPosts]);
-
-  // Pagination
-  const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
-  const startIndex = (page - 1) * postsPerPage;
-  const endIndex = startIndex + postsPerPage;
-  const paginatedPosts = filteredPosts.slice(startIndex, endIndex);
+  // Extract unique categories from blogs
+  const categories = ["Tất cả"];
+  if (data?.blogs) {
+    const uniqueCategories = Array.from(
+      new Set(data.blogs.map((blog: BlogPost) => blog.danh_muc).filter(Boolean))
+    );
+    categories.push(...(uniqueCategories as string[]));
+  }
 
   // Reset to page 1 when filter changes
   const handleCategoryChange = (category: string) => {
@@ -172,6 +67,18 @@ export default function BlogPage() {
     setSearch(value);
     setPage(1);
   };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "";
+    return new Date(dateString).toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const blogPosts = data?.blogs || [];
+  const pagination = data?.pagination || { total: 0, totalPages: 0 };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -220,47 +127,83 @@ export default function BlogPage() {
           </div>
 
           {/* Results Count */}
-          {filteredPosts.length > 0 && (
+          {!isLoading && pagination.total > 0 && (
             <div className="mb-6 text-sm text-gray-600 dark:text-gray-400">
-              Tìm thấy {filteredPosts.length} bài viết
+              Tìm thấy {pagination.total} bài viết
+            </div>
+          )}
+
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="text-center py-12">
+              <p className="text-red-600 dark:text-red-400">
+                Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau.
+              </p>
             </div>
           )}
 
           {/* Blog Posts Grid */}
-          {paginatedPosts.length > 0 ? (
+          {!isLoading && !error && blogPosts.length > 0 ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
-                {paginatedPosts.map((post) => (
+                {blogPosts.map((post: BlogPost) => (
                   <Link
                     key={post.id}
-                    href={`/blog/${post.id}`}
+                    href={`/blog/${post.slug}`}
                     className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 group"
                   >
                     <div className="relative h-48 w-full overflow-hidden">
                       <Image
-                        src={post.image}
-                        alt={post.title}
+                        src={post.hinh_anh || "/images/cards/card-01.jpg"}
+                        alt={post.tieu_de}
                         fill
                         className="object-cover group-hover:scale-110 transition-transform duration-300"
                       />
-                      <div className="absolute top-3 left-3">
-                        <span className="px-3 py-1 text-xs font-semibold text-white bg-primary rounded-full">
-                          {post.category}
-                        </span>
-                      </div>
+                      {post.danh_muc && (
+                        <div className="absolute top-3 left-3">
+                          <span className="px-3 py-1 text-xs font-semibold text-white bg-primary rounded-full">
+                            {post.danh_muc}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div className="p-6">
                       <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-3">
-                        <span>{post.date}</span>
-                        <span>•</span>
-                        <span>{post.author}</span>
+                        <span>{formatDate(post.ngay_dang)}</span>
+                        {post.tac_gia && (
+                          <>
+                            <span>•</span>
+                            <span>{post.tac_gia.ho_ten}</span>
+                          </>
+                        )}
                       </div>
                       <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3 group-hover:text-primary transition-colors line-clamp-2">
-                        {post.title}
+                        {post.tieu_de}
                       </h3>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 mb-4">
-                        {post.excerpt}
-                      </p>
+                      {post.mo_ta_ngan && (
+                        <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 mb-4">
+                          {post.mo_ta_ngan}
+                        </p>
+                      )}
+                      {post.tags && post.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-4">
+                          {post.tags.slice(0, 3).map((tag, index) => (
+                            <span
+                              key={index}
+                              className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       <span className="text-primary text-sm font-medium group-hover:underline">
                         Đọc thêm →
                       </span>
@@ -270,7 +213,7 @@ export default function BlogPage() {
               </div>
 
               {/* Pagination */}
-              {totalPages > 1 && (
+              {pagination.totalPages > 1 && (
                 <div className="flex justify-center items-center gap-2">
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -280,11 +223,11 @@ export default function BlogPage() {
                     Trước
                   </button>
                   <span className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
-                    Trang {page} / {totalPages}
+                    Trang {page} / {pagination.totalPages}
                   </span>
                   <button
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page === totalPages}
+                    onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+                    disabled={page === pagination.totalPages}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Sau
@@ -292,13 +235,13 @@ export default function BlogPage() {
                 </div>
               )}
             </>
-          ) : (
+          ) : !isLoading && !error && blogPosts.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-600 dark:text-gray-400">
                 Không tìm thấy bài viết nào
               </p>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 

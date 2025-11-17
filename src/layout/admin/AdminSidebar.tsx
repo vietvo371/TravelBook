@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAdminSidebar } from "@/context/AdminSidebarContext";
 import { HorizontaLDots } from "@/icons/index";
-import { Brain, Users, AlertTriangle, MapPin, BarChart3, Settings, User, Shield, Activity } from "lucide-react";
+import { Plane, BookOpen, Users, BarChart3, Settings, User, Activity, FileText } from "lucide-react";
 import SidebarWidget from "@/layout/SidebarWidget";
 
 type NavItem = {
@@ -16,11 +16,11 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { name: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
-  { name: "Sự cố hạ tầng", href: "/admin/reports", icon: AlertTriangle },
-  { name: "Bản đồ", href: "/admin/map", icon: MapPin },
-  { name: "Đội xử lý", href: "/admin/teams", icon: Users },
+  { name: "Quản lý Tours", href: "/admin/tours", icon: Plane },
+  { name: "Quản lý Bookings", href: "/admin/bookings", icon: BookOpen },
+  { name: "Quản lý Blog", href: "/admin/blogs", icon: FileText },
+  { name: "Quản lý Users", href: "/admin/users", icon: Users },
   { name: "Thống kê", href: "/admin/statistics", icon: Activity },
-  { name: "AI Phân tích", href: "/admin/ai", icon: Brain },
   { name: "Cài đặt", href: "/admin/settings", icon: Settings },
   { name: "Hồ sơ", href: "/admin/profile", icon: User },
 ];
